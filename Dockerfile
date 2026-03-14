@@ -1,38 +1,12 @@
-FROM php:8.2-fpm
-
-RUN apt-get update && apt-get install -y \
-    libpng-dev libonig-dev libxml2-dev zip unzip git curl nginx \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+FROM serversideup/php:8.2-fpm-nginx
 
 WORKDIR /var/www/html
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 COPY . .
 
 RUN composer install --no-dev --optimize-autoloader \
     && chown -R www-data:www-data storage bootstrap/cache
 
-RUN printf 'server {\n\
-    listen 80;\n\
-    root /var/www/html/public;\n\
-    index index.php;\n\
-    location / {\n\
-        try_files $uri $uri/ /index.php?$query_string;\n\
-    }\n\
-    location ~ \\.php$ {\n\
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;\n\
-        fastcgi_index index.php;\n\
-        include fastcgi_params;\n\
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
-    }\n\
-}\n' > /etc/nginx/sites-available/default
-
-RUN mkdir -p /var/run/php && \
-    printf '#!/bin/bash\nset -e\nphp artisan migrate --force\nphp-fpm &\nwhile [ ! -S /var/run/php/php8.2-fpm.sock ]; do sleep 1; done\nnginx -g "daemon off;"\n' > /start.sh \
-    && chmod +x /start.sh
-
-EXPOSE 80
-
-CMD ["/bin/bash", "/start.sh"]
+CMD php artisan migrate --force && supervisord -c /etc/supervisor/conf.d/supervisord.conf
