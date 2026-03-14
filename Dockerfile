@@ -22,14 +22,15 @@ RUN printf 'server {\n\
         try_files $uri $uri/ /index.php?$query_string;\n\
     }\n\
     location ~ \\.php$ {\n\
-        fastcgi_pass 127.0.0.1:9000;\n\
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;\n\
         fastcgi_index index.php;\n\
         include fastcgi_params;\n\
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
     }\n\
 }\n' > /etc/nginx/sites-available/default
 
-RUN printf '#!/bin/bash\nset -e\nphp artisan migrate --force\nphp-fpm &\nsleep 2\nnginx -t && nginx -g "daemon off;"\n' > /start.sh \
+RUN mkdir -p /var/run/php && \
+    printf '#!/bin/bash\nset -e\nphp artisan migrate --force\nphp-fpm &\nwhile [ ! -S /var/run/php/php8.2-fpm.sock ]; do sleep 1; done\nnginx -g "daemon off;"\n' > /start.sh \
     && chmod +x /start.sh
 
 EXPOSE 80
