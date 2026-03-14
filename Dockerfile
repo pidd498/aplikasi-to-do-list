@@ -29,7 +29,7 @@ RUN printf 'server {\n\
     }\n\
 }\n' > /etc/nginx/sites-available/default
 
-RUN printf '#!/bin/bash\nset -e\nphp artisan migrate --force\nphp-fpm &\nnginx -g "daemon off;"\n' > /start.sh \
+RUN printf '#!/bin/bash\nset -e\nphp artisan migrate --force\nphp-fpm &\nsleep 2\nnginx -t && nginx -g "daemon off;"\n' > /start.sh \
     && chmod +x /start.sh
 
 EXPOSE 80
