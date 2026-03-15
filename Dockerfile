@@ -16,11 +16,11 @@ RUN composer install --no-dev --optimize-autoloader \
     && chmod -R 777 storage bootstrap/cache
 
 ENV SERVER_NAME=":8080"
-ENV FRANKENPHP_CONFIG="worker ./public/index.php"
+ENV FRANKENPHP_CONFIG=""
 
 EXPOSE 8080
 
-RUN printf '#!/bin/sh\nset -e\nphp artisan migrate --force\nexec frankenphp run --config /etc/caddy/Caddyfile\n' > /start.sh \
+RUN printf '#!/bin/sh\nset -e\nphp artisan migrate --force\nexec frankenphp php-server --listen :8080 --root /app/public\n' > /start.sh \
     && chmod +x /start.sh
 
 CMD ["/start.sh"]
