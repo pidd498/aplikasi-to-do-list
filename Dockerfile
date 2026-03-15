@@ -2,7 +2,7 @@ FROM dunglas/frankenphp:php8.2-bookworm
 
 RUN apt-get update && apt-get install -y \
     libpng-dev libonig-dev libxml2-dev zip unzip git curl \
-    && install-php-extensions pdo_mysql mbstring exif pcntl bcmath gd \
+    && install-php-extensions pdo_mysql mbstring exif pcntl bcmath gd calendar \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
